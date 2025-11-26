@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Next-Gen 18+ Video Zone</title>
+<link rel="manifest" href="manifest.json"> <!-- PWA manifest -->
+<style>
+/* --- General Styles --- */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;display:flex;flex-direction:column;align-items:center;}
+header{width:100%;padding:20px;text-align:center;font-size:28px;font-weight:bold;background:linear-gradient(90deg,#ff3c00,#ffdd00);color:#0a0a0a;letter-spacing:1px;text-shadow:2px 2px 6px rgba(0,0,0,0.5);}
+.hero{width:95%;max-width:900px;margin:20px auto;background:linear-gradient(145deg,#1a1a1a,#111);padding:20px;border-radius:20px;box-shadow:0 10px 30px rgba(255,140,0,0.6);text-align:center;transition:all 0.5s;}
+.hero img{width:80px;height:80px;margin:10px;border-radius:50%;box-shadow:0 0 20px #ff3c00;transition:transform 0.4s;}
+.hero img:hover{transform:scale(1.2) rotate(5deg);}
+h1,h2{text-align:center;margin:10px 0;}
+.hero p{color:#f0a500;font-size:16px;}
+main{max-width:900px;width:95%;padding:10px;}
+
+/* --- Upload Section --- */
+input,button{padding:12px;margin:8px 0;width:100%;border-radius:12px;border:none;font-size:16px;}
+button{background:linear-gradient(90deg,#ff3c00,#ffdd00);color:#0a0a0a;font-weight:bold;cursor:pointer;transition:all 0.3s ease;}
+button:hover{opacity:0.9;transform:scale(1.05);}
+
+/* --- Tabs --- */
+.tabs{display:flex;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.tab{padding:10px 20px;margin:5px;border-radius:10px;background:#222;cursor:pointer;transition:0.3s;}
+.tab.active{background:linear-gradient(90deg,#ff3c00,#ffdd00);color:#0a0a0a;font-weight:bold;}
+.tab:hover{opacity:0.8;}
+
+/* --- Video Grid --- */
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;margin-top:20px;}
+.video-card{background:#1a1a1a;padding:10px;border-radius:15px;box-shadow:0 4px 15px rgba(255,140,0,0.3);transition:transform 0.3s,box-shadow 0.3s;}
+.video-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 10px 30px rgba(255,140,0,0.8);}
+.video-card img{width:100%;border-radius:12px;margin-bottom:5px;transition:all 0.3s;}
+.video-card img:hover{transform:scale(1.1) rotate(3deg);}
+video{width:100%;border-radius:12px;margin-top:5px;}
+
+/* --- Category Filter --- */
+.category-filter{display:flex;justify-content:center;flex-wrap:wrap;margin:15px 0;}
+.category-btn{padding:6px 12px;margin:3px;border-radius:8px;background:#222;cursor:pointer;transition:0.3s;}
+.category-btn.active{background:linear-gradient(90deg,#ff3c00,#ffdd00);color:#0a0a0a;font-weight:bold;}
+.category-btn:hover{opacity:0.8;}
+
+/* --- Search --- */
+#searchBar{padding:10px;border-radius:12px;width:95%;max-width:400px;margin:10px auto;display:block;border:none;font-size:16px;}
+
+/* --- Hidden --- */
+.hidden{display:none;}
+
+@media(max-width:500px){
+header{font-size:22px;}
+.hero img{width:60px;height:60px;}
+}
+</style>
+</head>
+<body>
+
+<header>Next-Gen 18+ Video Zone</header>
+
+<div class="hero">
+<h1>Welcome to Next-Gen Video Zone</h1>
+<p>Futuristic legal 18+ video platform with advanced features</p>
+<div>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/18%2B_icon.svg/1024px-18%2B_icon.svg.png">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Adult_icon.svg/1200px-Adult_icon.svg.png">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/18plus_icon.svg/1024px-18plus_icon.svg.png">
+</div>
+</div>
+
+<main>
+<div class="section">
+<h2>Upload Video</h2>
+<input type="file" id="videoInput" accept="video/*">
+<button onclick="uploadVideo()">Upload</button>
+</div>
+
+<input type="text" id="searchBar" placeholder="Search videos by name...">
+
+<div class="tabs">
+<div class="tab active" data-tab="featured">Featured</div>
+<div class="tab" data-tab="latest">Latest</div>
+<div class="tab" data-tab="trending">Trending</div>
+</div>
+
+<div class="category-filter">
+<button class="category-btn active" data-category="all">All</button>
+<button class="category-btn" data-category="fun">Fun</button>
+<button class="category-btn" data-category="action">Action</button>
+<button class="category-btn" data-category="comedy">Comedy</button>
+</div>
+
+<div id="featured" class="video-grid"></div>
+<div id="latest" class="video-grid hidden"></div>
+<div id="trending" class="video-grid hidden"></div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+<script>
+// Cloudinary Setup
+const cloudName = "YOUR_CLOUD_NAME"; 
+const uploadPreset = "YOUR_UPLOAD_PRESET"; 
+
+let videos = [];
+
+// Upload Function
+async function uploadVideo(){
+const input = document.getElementById('videoInput');
+if(input.files.length===0){alert("Select a video"); return;}
+const file = input.files[0];
+let category = prompt("Enter category (fun/action/comedy):","fun") || "fun";
+const formData = new FormData();
+formData.append("file", file);
+formData.append("upload_preset", uploadPreset);
+
+try{
+const response = await axios.post(`https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, formData);
+const videoUrl = response.data.secure_url;
+const thumbUrl = response.data.thumbnail_url || videoUrl;
+videos.unshift({name:file.name,url:videoUrl,thumb:thumbUrl,category:category});
+displayVideos();
+input.value="";
+}catch(err){console.error(err);alert("Upload failed");}
+}
+
+// Display Videos
+function displayVideos(){
+const featured = document.getElementById('featured');
+const latest = document.getElementById('latest');
+const trending = document.getElementById('trending');
+featured.innerHTML = latest.innerHTML = trending.innerHTML = "";
+
+videos.forEach((v,i)=>{
+const card = `<div class="video-card" data-category="${v.category}"><img src="${v.thumb}" alt="${v.name}"><strong>${v.name}</strong><video src="${v.url}" controls></video></div>`;
+if(i<3) featured.innerHTML += card;
+latest.innerHTML += card;
+if(i%2===0) trending.innerHTML += card;
+});
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab=>{
+tab.addEventListener('click',()=>{
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+tab.classList.add('active');
+document.querySelectorAll('.video-grid').forEach(g=>g.classList.add('hidden'));
+document.getElementById(tab.dataset.tab).classList.remove('hidden');
+});
+});
+
+// Category Filter
+document.querySelectorAll('.category-btn').forEach(btn=>{
+btn.addEventListener('click',()=>{
+document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+const cat = btn.dataset.category;
+document.querySelectorAll('.video-card').forEach(card=>{
+card.style.display = (cat==="all" || card.dataset.category===cat)?"block":"none";
+});
+});
+});
+
+// Search Bar
+document.getElementById('searchBar').addEventListener('input',e=>{
+const val = e.target.value.toLowerCase();
+document.querySelectorAll('.video-card').forEach(card=>{
+card.style.display = card.querySelector('strong').textContent.toLowerCase().includes(val) ? "block" : "none";
+});
+});
+</script>
+</body>
+</html>
